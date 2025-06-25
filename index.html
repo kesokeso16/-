@@ -3,13 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <title>日報ビューア</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4CAF50">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore-compat.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    .entry { border: 1px solid #ccc; margin-bottom: 10px; padding: 10px; }
-    .entry h3 { margin: 0; font-size: 18px; }
-    .entry p { margin: 4px 0; }
+    body { font-family: sans-serif; padding: 20px; margin: 0; background: #f9f9f9; }
+    h1 { margin-top: 0; font-size: 24px; }
+    .entry { background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 5px solid #4CAF50; margin-bottom: 12px; padding: 12px; }
+    .entry h3 { margin: 0 0 8px 0; font-size: 18px; color: #333; }
+    .entry p, .entry pre { margin: 6px 0; font-size: 14px; }
+    pre { white-space: pre-wrap; background: #f1f1f1; padding: 8px; border-radius: 4px; }
   </style>
 </head>
 <body>
@@ -37,7 +45,7 @@
             <h3>${d.property || "（物件名なし）"} - ${d.members || "（作業者なし）"}</h3>
             <p><strong>日付:</strong> ${d.timestamp?.toDate().toLocaleDateString('ja-JP') || "なし"}</p>
             <p><strong>クライアント:</strong> ${d.client || "なし"}</p>
-            <p><strong>時間:</strong> ${d.startTime} ～ ${d.endTime}</p>
+            <p><strong>時間:</strong> ${d.startTime || ""} ～ ${d.endTime || ""}</p>
             <p><strong>住所:</strong> ${d.address || "なし"}</p>
             <pre><strong>内容:</strong>\n${d.sections || "なし"}</pre>
           `;
@@ -47,6 +55,14 @@
       .catch(err => {
         document.getElementById("entries").innerHTML = "読み込みエラー: " + err;
       });
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(reg => console.log('Service Worker registered:', reg))
+          .catch(err => console.error('Service Worker registration failed:', err));
+      });
+    }
   </script>
 </body>
 </html>
