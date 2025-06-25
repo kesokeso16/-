@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>日報ビューア</title>
+  <title>日報ビューアver2</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#4CAF50">
@@ -18,10 +18,17 @@
     .entry h3 { margin: 0 0 8px 0; font-size: 18px; color: #333; }
     .entry p, .entry pre { margin: 6px 0; font-size: 14px; }
     pre { white-space: pre-wrap; background: #f1f1f1; padding: 8px; border-radius: 4px; }
+    select { font-size: 16px; margin-bottom: 16px; padding: 6px; }
   </style>
 </head>
 <body>
-  <h1>📄 日報ビューア</h1>
+  <h1>📄 日報ビューアver2</h1>
+  <label>表示モード：</label>
+  <select id="modeSelector" onchange="loadReports()">
+    <option value="nippo">共用清掃</option>
+    <option value="nippo_house">ハウスクリーニング</option>
+  </select>
+
   <div id="entries">読み込み中...</div>
 
   <script>
@@ -33,28 +40,49 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    db.collection("nippo").orderBy("timestamp", "desc").limit(50).get()
-      .then(snapshot => {
-        const container = document.getElementById("entries");
-        container.innerHTML = "";
-        snapshot.forEach(doc => {
-          const d = doc.data();
-          const div = document.createElement("div");
-          div.className = "entry";
-          div.innerHTML = `
-            <h3>${d.property || "（物件名なし）"} - ${d.members || "（作業者なし）"}</h3>
-            <p><strong>日付:</strong> ${d.timestamp?.toDate().toLocaleDateString('ja-JP') || "なし"}</p>
-            <p><strong>クライアント:</strong> ${d.client || "なし"}</p>
-            <p><strong>時間:</strong> ${d.startTime || ""} ～ ${d.endTime || ""}</p>
-            <p><strong>住所:</strong> ${d.address || "なし"}</p>
-            <pre><strong>内容:</strong>\n${d.sections || "なし"}</pre>
-          `;
-          container.appendChild(div);
+    function formatReportBody(d) {
+      if (d.sections) return d.sections;
+      if (d.sets) {
+        return d.sets.map((s, i) =>
+          `【${i + 1}】物件: ${s.property || ''}／クライアント: ${s.client || ''}\n所要時間: ${(s.durations || []).join(', ')}\n備考: ${(s.notes || []).join(', ')} ${s.noteOther || ''}`
+        ).join('\n\n');
+      }
+      return "内容不明";
+    }
+
+    function loadReports() {
+      const mode = document.getElementById("modeSelector").value;
+      const container = document.getElementById("entries");
+      container.innerHTML = "読み込み中...";
+
+      db.collection(mode).orderBy("timestamp", "desc").limit(50).get()
+        .then(snapshot => {
+          container.innerHTML = "";
+          if (snapshot.empty) {
+            container.innerHTML = "データがありません";
+            return;
+          }
+          snapshot.forEach(doc => {
+            const d = doc.data();
+            const div = document.createElement("div");
+            div.className = "entry";
+            div.innerHTML = `
+              <h3>${d.property || "（物件名なし）"} - ${d.members || "（作業者なし）"}</h3>
+              <p><strong>日付:</strong> ${d.timestamp?.toDate().toLocaleDateString('ja-JP') || "なし"}</p>
+              <p><strong>クライアント:</strong> ${d.client || "なし"}</p>
+              <p><strong>時間:</strong> ${d.startTime || ""} ～ ${d.endTime || ""}</p>
+              <p><strong>住所:</strong> ${d.address || "なし"}</p>
+              <pre><strong>内容:</strong>\n${formatReportBody(d)}</pre>
+            `;
+            container.appendChild(div);
+          });
+        })
+        .catch(err => {
+          container.innerHTML = "読み込みエラー: " + err;
         });
-      })
-      .catch(err => {
-        document.getElementById("entries").innerHTML = "読み込みエラー: " + err;
-      });
+    }
+
+    loadReports();
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
