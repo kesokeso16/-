@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>日報ビューア</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore-compat.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .entry { border: 1px solid #ccc; margin-bottom: 10px; padding: 10px; }
+    .entry h3 { margin: 0; font-size: 18px; }
+    .entry p { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <h1>📄 日報ビューア</h1>
+  <div id="entries">読み込み中...</div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyASFMoP61sW83YKtVkFRDNwtUtpE0G8naM",
+      authDomain: "projectofnakao.firebaseapp.com",
+      projectId: "projectofnakao"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    db.collection("nippo").orderBy("timestamp", "desc").limit(50).get()
+      .then(snapshot => {
+        const container = document.getElementById("entries");
+        container.innerHTML = "";
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          const div = document.createElement("div");
+          div.className = "entry";
+          div.innerHTML = `
+            <h3>${d.property || "（物件名なし）"} - ${d.members || "（作業者なし）"}</h3>
+            <p><strong>日付:</strong> ${d.timestamp?.toDate().toLocaleDateString('ja-JP') || "なし"}</p>
+            <p><strong>クライアント:</strong> ${d.client || "なし"}</p>
+            <p><strong>時間:</strong> ${d.startTime} ～ ${d.endTime}</p>
+            <p><strong>住所:</strong> ${d.address || "なし"}</p>
+            <pre><strong>内容:</strong>\n${d.sections || "なし"}</pre>
+          `;
+          container.appendChild(div);
+        });
+      })
+      .catch(err => {
+        document.getElementById("entries").innerHTML = "読み込みエラー: " + err;
+      });
+  </script>
+</body>
+</html>
