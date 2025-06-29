@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>日報ビューアver2</title>
+  <title>日報ビューアver2（所要時間表示対応）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#4CAF50">
@@ -11,41 +11,26 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-firestore-compat.js"></script>
-  <style>
-    body { font-family: sans-serif; padding: 20px; margin: 0; background: #f9f9f9; }
-    h1 { margin-top: 0; font-size: 24px; }
-    .entry { background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 5px solid #4CAF50; margin-bottom: 12px; padding: 12px; }
-    .entry h3 { margin: 0 0 8px 0; font-size: 18px; color: #333; }
-    .entry p, .entry pre { margin: 6px 0; font-size: 14px; }
-    pre { white-space: pre-wrap; background: #f1f1f1; padding: 8px; border-radius: 4px; }
-    select { font-size: 16px; margin-bottom: 16px; padding: 6px; }
-  </style>
+  <style>body{font-family:sans-serif;padding:20px;margin:0;background:#f9f9f9;}h1{margin-top:0;font-size:24px;}.entry{background:#fff;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.1);border-left:5px solid #4CAF50;margin-bottom:12px;padding:12px;}.entry h3{margin:0 0 8px 0;font-size:18px;color:#333;}.entry p,.entry pre{margin:6px 0;font-size:14px;}pre{white-space:pre-wrap;background:#f1f1f1;padding:8px;border-radius:4px;}select{font-size:16px;margin-bottom:16px;padding:6px;}</style>
 </head>
 <body>
-  <h1>📄 日報ビューアver2</h1>
+  <h1>📄 日報ビューアver2（所要時間表示対応）</h1>
   <label>表示モード：</label>
   <select id="modeSelector" onchange="loadReports()">
     <option value="nippo_kyoyo">共用清掃</option>
     <option value="nippo">ハウスクリーニング</option>
   </select>
-
   <div id="entries">読み込み中...</div>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyASFMoP61sW83YKtVkFRDNwtUtpE0G8naM",
-      authDomain: "projectofnakao.firebaseapp.com",
-      projectId: "projectofnakao"
-    };
+    const firebaseConfig = {apiKey:"AIzaSyASFMoP61sW83YKtVkFRDNwtUtpE0G8naM",authDomain:"projectofnakao.firebaseapp.com",projectId:"projectofnakao"};
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     function formatReportBody(d) {
       if (d.sections) return d.sections;
       if (d.sets) {
-        return d.sets.map((s, i) =>
-          `【${i + 1}】物件: ${s.property || ''}／クライアント: ${s.client || ''}\n所要時間: ${(s.durations || []).join(', ')}\n備考: ${(s.notes || []).join(', ')} ${s.noteOther || ''}`
-        ).join('\n\n');
+        return d.sets.map((s, i) => `【${i + 1}】物件: ${s.property || ''}／クライアント: ${s.client || ''}\n所要時間: ${s.durationStart || ''} ～ ${s.durationEnd || ''}\n備考: ${(s.notes || []).join(', ')} ${s.noteOther || ''}`).join('\n\n');
       }
       return "内容不明";
     }
